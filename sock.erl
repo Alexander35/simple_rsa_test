@@ -2,27 +2,25 @@
 
 -export([operate/1]).
 
-operate({send,Msg})->
+operate(Msg)->
 	{ok, Server_Sock} = start_server(),
 	{ok, Client_Sock} = connect("127.0.0.1"),
 
 	send(Client_Sock, Msg),
 	
 	Answer = fetch(Server_Sock),
-	Encoded= server:encode(Msg),
-	server:stop(),
+	Encoded = server:encode(Msg),
+
 	ok=close_sock(Server_Sock),
 	ok=close_sock(Client_Sock),
-	Encoded;
-
-operate(Other)->
-	io:format("unknown command, ~p~n", [Other]).
+	
+	Encoded.
 
 connect(Server_name) ->
 	gen_tcp:connect(Server_name, 5678, [binary, {packet, 0}]).
 
 send(Sock,Message)->	
-	A = gen_tcp:send(Sock, Message).
+	ok = gen_tcp:send(Sock, Message).
 
 close_sock(Sock)->
 	gen_tcp:close(Sock).
@@ -33,18 +31,9 @@ start_server() ->
 
 fetch(Sock)->
 	{ok, Socket}= gen_tcp:accept(Sock),
-	
 	{ok, Bin} = do_recv(Socket, []),
 	[_|[M]]=Bin,
 	M.
-	%%case M of
-	%%	{encode, Msg} ->
-	%%		server:encode(Msg);
-	%%	{decode, Msg} ->
-	%%		server:decode(Msg);
-	%%	Other -> 
-	%%		{error, unk_msg, Other}
-	%%end.
 
 do_recv(Sock, Bs) ->
     	case gen_tcp:recv(Sock, 0, 1000) of
